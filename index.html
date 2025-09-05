@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>Flappy Bird Clone</title>
 	<link rel="icon" href="src/assets/sprites/birds/yellowbird-midflap.png">
 
 	<style>
 		html, body {
-			height: 100%;
+			/* height: 100%; */
+			padding: 0;
 			margin: 0;
 			overflow: hidden;
+			background: #000;
+			touch-action: none;
 		}
 
 		body {
@@ -22,10 +25,7 @@
 
 		#gameCanvas {
 			display: block;
-			max-width: 100vw;
-			max-height: 100vh;
-			border: 2px solid #fff;
-			box-sizing: content-box;
+			background: #000;
 
 		}
 

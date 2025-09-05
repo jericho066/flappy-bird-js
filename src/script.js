@@ -251,12 +251,12 @@ const resizeCanvas = () => {
 	const cssHeight = window.innerHeight;
 
 	//* calculating the game area.
-	const gameUnitsWide = Math.max(BASE_WIDTH, cssWidth);
-    const gameUnitsHigh = Math.max(BASE_HEIGHT, cssHeight);
+	const gameWidth = Math.max(BASE_WIDTH, cssWidth);
+    const gameHeight = Math.max(BASE_HEIGHT, cssHeight);
 
     //* screen size
-    SCREEN_WIDTH = gameUnitsWide;
-    SCREEN_HEIGHT = gameUnitsHigh;
+    SCREEN_WIDTH = gameWidth;
+    SCREEN_HEIGHT = gameHeight;
 	
 	currentScale = 1;
 
@@ -266,7 +266,9 @@ const resizeCanvas = () => {
 	//* set css size (how big the game appears on the screen)
 	canvas.style.width = cssWidth + 'px';
 	canvas.style.height = cssHeight + 'px';
-	canvas.style.position = 'absolute';
+	canvas.style.position = 'fixed';
+	canvas.style.top = "0"
+	canvas.style.left = "0";
 
 	canvas.width = Math.floor(cssWidth * devicePixelRatio);
 	canvas.height = Math.floor(cssHeight * devicePixelRatio);
@@ -282,12 +284,26 @@ const resizeCanvas = () => {
         bird.y = SCREEN_HEIGHT / 2;
     }
 
+
+	const isMobileScreen = cssWidth < 768;
+	if (isMobileScreen) {
+		const scale = Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT);
+		restartButton.width = Math.max(120, 120 * scale);
+		restartButton.height = Math.max(60, 60 * scale);
+	} else {
+		restartButton.width = 100;
+		restartButton.height = 50;
+	}
+
 	// restart button position.
 	restartButton.x = Math.round((SCREEN_WIDTH - restartButton.width) / 2);
-	restartButton.y = Math.round(SCREEN_HEIGHT / 2 + 50);
-
+	restartButton.y = Math.round(SCREEN_HEIGHT * 0.6);
 
 };
+
+const isMobile = () => {
+	return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
 const getPointer = (evt) => {
 	const rect = canvas.getBoundingClientRect();
@@ -319,14 +335,16 @@ const getPointer = (evt) => {
 };
 
 const spawnPipe = () => {
-	const minTop = 150;
-	const maxTop = SCREEN_HEIGHT - pipeGap - groundHeight - 150;
+	const minTop = 100;
+	const maxTop = SCREEN_HEIGHT - pipeGap - groundHeight - 100;
 
 	//* random height for the top pipe.
 	const height = Math.random() * Math.max(0, maxTop - minTop) + minTop;
 
 	//* to spawn pipes on the right side
 	const spawnX = SCREEN_WIDTH + pipeWidth;
+
+	const scalePipeWidth = isMobile() ? Math.max(pipeWidth, pipeWidth * (SCREEN_WIDTH / BASE_WIDTH)) : pipeWidth;
 
 	//* pick a random pipe sprite.
 	const sprite = pipeImg || null;
@@ -335,7 +353,7 @@ const spawnPipe = () => {
 	const topPipe = {
 		x: spawnX,
 		y: 0,
-		width: pipeWidth,
+		width: scalePipeWidth,
 		height: height,
 		sprite: sprite
 	};
@@ -344,7 +362,7 @@ const spawnPipe = () => {
 	const bottomPipe = {
 		x: spawnX,
 		y: height + pipeGap,
-		width: pipeWidth,
+		width: scalePipeWidth,
 		height: SCREEN_HEIGHT - (height + pipeGap) - groundHeight,
 		sprite: sprite
 	};
@@ -441,17 +459,19 @@ const drawScore = (score) => {
 	const scoreStr = Math.floor(score).toString();
 	const digits = scoreStr.split("").map(d => parseInt(d, 10));
 
-	const digitWidth = (numberSprites[0]?.width || 30) * 1.5; //* fallback if missing
-	const digitHeight = (numberSprites[0]?.height || 40) * 1.5;
+	//* scale digits based on screen size
+	const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
+	const digitWidth = (numberSprites[0]?.width || 30) * Math.max(1.5, scale * 1.5);
+	const digitHeight = (numberSprites[0]?.height || 40) * Math.max(1.5, scale * 1.5);
 
 	let totalWidth = digits.length * digitWidth;
 	let startX = (SCREEN_WIDTH - totalWidth) / 2;
 	let y ; //* score distance from top
 
 	if (running) {
-		y = 30;
+		y = isMobile() ? Math.max(50, SCREEN_HEIGHT * 0.08) : 30;
 	} else {
-		y = 300;
+		y = SCREEN_HEIGHT * 0.4;
 	}
 
 	digits.forEach(digit => {
@@ -461,6 +481,7 @@ const drawScore = (score) => {
 		} else {
 			ctx.fillStyle = "white";
 			ctx.font = "48px Arial";
+			ctx.textAlign ="canter";
 			ctx.fillText(digit, startX, y + digitHeight);
 		}
 		startX += digitWidth;
@@ -569,15 +590,20 @@ const drawStartScreen = () => {
 
 	//* draw get ready message
 	if (getReadySprite) {
-		const width = Math.min(300, SCREEN_WIDTH * 0.7);
-		const height = width * 1.3; 
+		const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
+		const maxWidth = SCREEN_WIDTH * 0.8;
+		const width = Math.min(300 * scale, maxWidth);
+		const height = width * (getReadySprite.height / getReadySprite.width); 
 		const x = (SCREEN_WIDTH - width) / 2;
-		const y = SCREEN_HEIGHT / 2 - height / 2 - 50;
+		const y = SCREEN_HEIGHT * 0.2;
 
 		ctx.drawImage(getReadySprite, x, y, width, height)
 	}else {
-		drawText('Get Ready!', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50, white, 48);
-		drawText('Tap to Start', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 20, white, 32);
+		const fontSize = isMobile() ? Math.min(48, SCREEN_WIDTH / 12) : 48;
+		const smallFontSize = isMobile() ? Math.min(32, SCREEN_WIDTH / 20) : 32;
+
+		drawText('Get Ready!', SCREEN_WIDTH / 2, SCREEN_HEIGHT * 0.35, white, fontSize);
+		drawText('Tap to Start', SCREEN_WIDTH / 2, SCREEN_HEIGHT * 0.45, white, smallFontSize);
 	}
 }
 
@@ -704,15 +730,17 @@ const drawGameOver = () => {
 	drawGame(true);
 
 	if (gameOverSprite) {
-		const gameOverWidth = 360;
-		const gameOverHeight = 60;
+		const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
+		const gameOverWidth = Math.min(360 * scale, SCREEN_WIDTH * 0.8);
+		const gameOverHeight = Math.min(60 * scale, gameOverWidth * (60/360));
 		const gameOverX = (SCREEN_WIDTH - gameOverWidth) / 2;
-		const gameOverY = SCREEN_HEIGHT / 2 - 150;
+		const gameOverY = SCREEN_HEIGHT * 0.25;
 
 		ctx.drawImage(gameOverSprite, gameOverX, gameOverY, gameOverWidth, gameOverHeight);
 	} else {
 		//* fallback text if the game over sprite failed to load.
-		drawText('Game Over', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, white, 72);
+		const fontSize = isMobile() ? Math.min(72, SCREEN_WIDTH / 10) : 72;
+		drawText('Game Over', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100, white, fontSize);
 	}
 	
 	drawScore(score);
@@ -733,7 +761,8 @@ const drawGameOver = () => {
 			restartButton.height
 		);
 
-		drawText('Restart', SCREEN_WIDTH / 2, restartButton.y + 40, white, 48);
+		const fontSize = isMobile() ? Math.min(48, SCREEN_WIDTH / 15) : 48;
+		drawText('Restart', SCREEN_WIDTH / 2, restartButton.y + restartButton.height/2 + 8, white, fontSize);
 	}
 };
 
@@ -765,6 +794,16 @@ const resetGame = () => {
 		bgImg = bgSprites[idx] || null;
 	} else {
 		bgImg = null;
+	}
+
+	//* scale bird for mobile
+	if (isMobile()) {
+		const scale = Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT);
+		bird.width = 50 * Math.max(1, scale * 0.8);
+		bird.height = 35 * Math.max(1, scale * 0.8);
+	} else {
+		bird.width = 50;
+		bird.height = 35;
 	}
 
 	birdFrame = 1;
@@ -802,6 +841,8 @@ const resetGame = () => {
 };
 
 const handleClick = (event) => {
+	event.preventDefault(); //* to prevent zooming on mobile.
+
 	const p = getPointer(event);
 	if (!p) return;
 
@@ -816,11 +857,12 @@ const handleClick = (event) => {
 		gameStart();
 	} else if (gameState === "gameOver") {
 		//* to check if restart button was clicked
+		const touchPadding = isMobile() ? 20 : 0;
 		if (
-			clickX >= restartButton.x &&
-			clickX <= restartButton.x + restartButton.width &&
-			clickY >= restartButton.y &&
-			clickY <= restartButton.y + restartButton.height
+			clickX >= restartButton.x - touchPadding &&
+			clickX <= restartButton.x + restartButton.width + touchPadding &&
+			clickY >= restartButton.y - touchPadding &&
+			clickY <= restartButton.y + restartButton.height + touchPadding
 		) {
 			resetGame();
 		}
@@ -1047,6 +1089,23 @@ document.addEventListener('keydown', function (event) {
 		}
 	}
 });
+
+//* to prevent scrolling/zooming on mobile.
+document.addEventListener("touchmove", (e) => {
+	e.preventDefault();
+}, {passive: false});
+
+document.addEventListener("gesturestart", (e) => {
+	e.preventDefault();
+}, {passive: false});
+
+document.addEventListener("gesturechange", (e) => {
+	e.preventDefault();
+}, {passive: false});
+
+document.addEventListener("gestureend", (e) => {
+	e.preventDefault();
+}, {passive: false});
 
 // resetGame();
 // requestAnimationFrame(gameLoop);

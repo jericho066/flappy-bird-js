@@ -243,6 +243,10 @@ const gameStart = () => {
 	startTime =performance.now();
 }
 
+const isMobile = () => {
+	return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 const resizeCanvas = () => {
 	devicePixelRatio = window.devicePixelRatio || 1;
 
@@ -250,13 +254,16 @@ const resizeCanvas = () => {
 	const cssWidth = window.innerWidth;
 	const cssHeight = window.innerHeight;
 
-	//* calculating the game area.
-	const gameWidth = Math.max(BASE_WIDTH, cssWidth);
-    const gameHeight = Math.max(BASE_HEIGHT, cssHeight);
+	if (isMobile()) {
+		//* for mobile
+		SCREEN_WIDTH = cssWidth;
+		SCREEN_HEIGHT = cssHeight;
+	} else {
+		//* for desktop
+		SCREEN_WIDTH = Math.max(BASE_WIDTH, cssWidth);
+		SCREEN_HEIGHT = Math.max(BASE_HEIGHT, cssHeight);
+	}
 
-    //* screen size
-    SCREEN_WIDTH = gameWidth;
-    SCREEN_HEIGHT = gameHeight;
 	
 	currentScale = 1;
 
@@ -284,12 +291,11 @@ const resizeCanvas = () => {
         bird.y = SCREEN_HEIGHT / 2;
     }
 
-
-	const isMobileScreen = cssWidth < 768;
-	if (isMobileScreen) {
-		const scale = Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT);
-		restartButton.width = Math.max(120, 120 * scale);
-		restartButton.height = Math.max(60, 60 * scale);
+	//* restart button positioning.
+	if (isMobile()) {
+		const minButtonSize = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
+		restartButton.width = Math.max(100, minButtonSize * 0.15);
+		restartButton.height = Math.max(50, minButtonSize * 0.08);
 	} else {
 		restartButton.width = 100;
 		restartButton.height = 50;
@@ -297,13 +303,10 @@ const resizeCanvas = () => {
 
 	// restart button position.
 	restartButton.x = Math.round((SCREEN_WIDTH - restartButton.width) / 2);
-	restartButton.y = Math.round(SCREEN_HEIGHT * 0.6);
+	restartButton.y = Math.round(SCREEN_HEIGHT * 0.55);
 
 };
 
-const isMobile = () => {
-	return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
 
 const getPointer = (evt) => {
 	const rect = canvas.getBoundingClientRect();
@@ -460,9 +463,15 @@ const drawScore = (score) => {
 	const digits = scoreStr.split("").map(d => parseInt(d, 10));
 
 	//* scale digits based on screen size
-	const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
-	const digitWidth = (numberSprites[0]?.width || 30) * Math.max(1.5, scale * 1.5);
-	const digitHeight = (numberSprites[0]?.height || 40) * Math.max(1.5, scale * 1.5);
+	let scale = 1.5;
+	if (isMobile()) {
+		const minDimension = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
+		scale = Math.max(1, minDimension / 400);
+	}
+
+
+	const digitWidth = (numberSprites[0]?.width || 30) * scale;
+	const digitHeight = (numberSprites[0]?.height || 40) * scale;
 
 	let totalWidth = digits.length * digitWidth;
 	let startX = (SCREEN_WIDTH - totalWidth) / 2;
@@ -480,8 +489,8 @@ const drawScore = (score) => {
 			ctx.drawImage(img, startX, y, digitWidth, digitHeight);
 		} else {
 			ctx.fillStyle = "white";
-			ctx.font = "48px Arial";
-			ctx.textAlign ="canter";
+			ctx.font = `${digitHeight}px Arial`;
+			ctx.textAlign ="left";
 			ctx.fillText(digit, startX, y + digitHeight);
 		}
 		startX += digitWidth;
@@ -590,17 +599,21 @@ const drawStartScreen = () => {
 
 	//* draw get ready message
 	if (getReadySprite) {
-		const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
-		const maxWidth = SCREEN_WIDTH * 0.8;
-		const width = Math.min(300 * scale, maxWidth);
+		let scale = 1;
+		if (isMobile()) {
+			const minDimension = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
+			scale = minDimension / 600;
+		}
+
+		const width = Math.min(300 * scale, SCREEN_WIDTH * 0.45);
 		const height = width * (getReadySprite.height / getReadySprite.width); 
 		const x = (SCREEN_WIDTH - width) / 2;
-		const y = SCREEN_HEIGHT * 0.2;
+		const y = SCREEN_HEIGHT * 0.18;
 
 		ctx.drawImage(getReadySprite, x, y, width, height)
 	}else {
 		const fontSize = isMobile() ? Math.min(48, SCREEN_WIDTH / 12) : 48;
-		const smallFontSize = isMobile() ? Math.min(32, SCREEN_WIDTH / 20) : 32;
+		const smallFontSize = isMobile() ? Math.min(32, SCREEN_WIDTH / 18) : 32;
 
 		drawText('Get Ready!', SCREEN_WIDTH / 2, SCREEN_HEIGHT * 0.35, white, fontSize);
 		drawText('Tap to Start', SCREEN_WIDTH / 2, SCREEN_HEIGHT * 0.45, white, smallFontSize);
@@ -730,7 +743,12 @@ const drawGameOver = () => {
 	drawGame(true);
 
 	if (gameOverSprite) {
-		const scale = isMobile() ? Math.min(SCREEN_WIDTH / BASE_WIDTH, SCREEN_HEIGHT / BASE_HEIGHT) : 1;
+		let scale = 1;
+		if (isMobile()) {
+			const minDimension = Math.min(SCREEN_WIDTH, SCREEN_HEIGHT);
+			scale = minDimension / 600
+		}
+
 		const gameOverWidth = Math.min(360 * scale, SCREEN_WIDTH * 0.8);
 		const gameOverHeight = Math.min(60 * scale, gameOverWidth * (60/360));
 		const gameOverX = (SCREEN_WIDTH - gameOverWidth) / 2;
@@ -748,10 +766,7 @@ const drawGameOver = () => {
 
 	//* draw restart button
 	if (buttonSprite) {
-		const buttonWidth = restartButton.width;
-		const buttonHeight = restartButton.height;
-
-		ctx.drawImage(buttonSprite, restartButton.x, restartButton.y, buttonWidth, buttonHeight);
+		ctx.drawImage(buttonSprite, restartButton.x, restartButton.y, restartButton.width, restartButton.height);
 	} else {
 		ctx.fillStyle = red;
 		ctx.fillRect(

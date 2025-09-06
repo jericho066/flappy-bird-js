@@ -40,7 +40,7 @@ let bgSprites = [];
 let bgImg = null;
 
 //* ground
-const groundHeight = 80;
+const groundHeight = 280;
 const GROUND_FILE = "src/assets/sprites/others/base.png";
 let groundSprite = null;
 

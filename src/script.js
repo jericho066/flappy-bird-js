@@ -248,6 +248,7 @@ const isMobile = () => {
 	return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+let scaleGroundHeight = groundHeight;
 const resizeCanvas = () => {
 	devicePixelRatio = window.devicePixelRatio || 1;
 
@@ -269,6 +270,12 @@ const resizeCanvas = () => {
 		gameScale = 1
 	}
 
+	//* to make ground proportionally bigger on smaller screens
+	if (isMobile()) {
+		scaleGroundHeight = Math.max(groundHeight * gameScale, SCREEN_HEIGHT * 0.12);
+	} else {
+		scaleGroundHeight = groundHeight * gameScale;
+	}
 	
 	currentScale = 1;
 
@@ -335,12 +342,11 @@ const getPointer = (evt) => {
 };
 
 const spawnPipe = () => {
-	const scaledGroundHeight = groundHeight * gameScale;
 	const scaledPipeGap = pipeGap * gameScale;
 	const scaledPipeWidth = pipeWidth * gameScale;
 
 	const minTop = 100 * gameScale;
-	const maxTop = SCREEN_HEIGHT - scaledPipeGap - scaledGroundHeight - 100;
+	const maxTop = SCREEN_HEIGHT - scaledPipeGap - scaleGroundHeight - (100 * gameScale);
 
 	//* random height for the top pipe.
 	const height = Math.random() * Math.max(0, maxTop - minTop) + minTop;
@@ -365,7 +371,7 @@ const spawnPipe = () => {
 		x: spawnX,
 		y: height + scaledPipeGap,
 		width: scaledPipeWidth,
-		height: SCREEN_HEIGHT - (height + scaledPipeGap) - scaledGroundHeight,
+		height: SCREEN_HEIGHT - (height + scaledPipeGap) - scaleGroundHeight,
 		sprite: sprite
 	};
 
@@ -378,7 +384,7 @@ const movePipes = () => {
 	//* looping backwards so we can safely remove pipes.
 	for (let i = pipes.length - 1; i >= 0; i--) {
 		//* move pipe left.
-		pipes[i].x -= pipeVelocity * gameScale;
+		pipes[i].x -= pipeVelocity ;
 
 		//* removing the pipes that are not be able to see on screen.
 		if (pipes[i].x + pipes[i].width < -scaledPipeWidth) {
@@ -426,8 +432,8 @@ const checkCollisions = () => {
 	}
 
 	//* to check ground boundary
-	const scaledGroundHeight = groundHeight * gameScale;
-	if (bird.y + bird.height > SCREEN_HEIGHT - scaledGroundHeight) {
+	
+	if (bird.y + bird.height > SCREEN_HEIGHT - scaleGroundHeight) {
 		//* hit and die sounds will play at the same time if the bird collides in ground.
 		hitSound.currentTime = 0;
 		hitSound.play();
@@ -515,7 +521,7 @@ const drawBird = () => {
 		rotation = Math.sin(floatOffset * 0.5) * 5;
 
 	} else if (dead && bird.forceAngle !== null) {
-		rotate = bird.forceAngle;
+		rotation = bird.forceAngle;
 
 	} else {
 		rotation = Math.max(-25, Math.min(45, bird.velocity * 2));
@@ -558,7 +564,7 @@ const drawStartScreen = () => {
 	ctx.save();
 	ctx.setTransform(1, 0, 0, 1, 0, 0);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = '#000'; // letterbox background color
+	ctx.fillStyle = '#000'; 
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	ctx.restore();
 
@@ -581,8 +587,8 @@ const drawStartScreen = () => {
 	drawBird();
 
 	//* ground
-	const scaledGroundHeight = groundHeight * gameScale;
-	const groundY = SCREEN_HEIGHT - scaledGroundHeight;
+	
+	const groundY = SCREEN_HEIGHT - scaleGroundHeight;
 
 	if (typeof groundSprite !== "undefined" && groundSprite) {
 		const scaledGroundWidth = groundSprite.width * gameScale;
@@ -590,11 +596,11 @@ const drawStartScreen = () => {
         
         for (let i = 0; i < numGroundTiles; i++) {
 			const x = (ground_x % scaledGroundWidth) + (i * scaledGroundWidth);
-            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaledGroundHeight);
+            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaleGroundHeight);
         }
 	} else {
 		ctx.fillStyle = groundColor;
-        ctx.fillRect(0, groundY, SCREEN_WIDTH, scaledGroundHeight);
+        ctx.fillRect(0, groundY, SCREEN_WIDTH, scaleGroundHeight);
 	}
 
 	//* draw get ready message
@@ -710,8 +716,8 @@ const drawGame = (drawBirdOnTop = false) => {
 	}
 
 	//* ground
-	const scaledGroundHeight = groundHeight * gameScale;
-	const groundY = SCREEN_HEIGHT - scaledGroundHeight;
+	
+	const groundY = SCREEN_HEIGHT - scaleGroundHeight;
 
 	if (typeof groundSprite !== "undefined" && groundSprite) {
 		const scaledGroundWidth = groundSprite.width * gameScale;
@@ -719,11 +725,11 @@ const drawGame = (drawBirdOnTop = false) => {
         
         for (let i = 0; i < numGroundTiles; i++) {
 			const x = (ground_x % scaledGroundWidth) + (i * scaledGroundWidth);
-            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaledGroundHeight);
+            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaleGroundHeight);
         }
 	} else {
 		ctx.fillStyle = groundColor;
-        ctx.fillRect(0, groundY, SCREEN_WIDTH, scaledGroundHeight);
+        ctx.fillRect(0, groundY, SCREEN_WIDTH, scaleGroundHeight);
 	}
 
 	if (drawBirdOnTop) {
@@ -955,9 +961,9 @@ const gameLoop = (currentTime) => {
 				bird.y += bird.velocity;
 
 				//* falling stop at the ground.
-				const scaledGroundHeight = groundHeight * gameScale;
-				if(bird.y + bird.height >= SCREEN_HEIGHT - scaledGroundHeight) {
-					bird.y = SCREEN_HEIGHT - scaledGroundHeight - bird.height;
+				
+				if(bird.y + bird.height >= SCREEN_HEIGHT - scaleGroundHeight) {
+					bird.y = SCREEN_HEIGHT - scaleGroundHeight - bird.height;
 
 					if( flashTimer <= 0) {
 						gameState ="gameOver";
@@ -975,8 +981,8 @@ const gameLoop = (currentTime) => {
 
 		//* full speed scrolling
 		if (!dead) {
-			bg_x -= bg_speed * gameScale;
-			ground_x -= ground_speed * gameScale;
+			bg_x -= bg_speed ;
+			ground_x -= ground_speed ;
 
 			if (bgImg) {
 				const bgWidth = bgImg.width * gameScale;

@@ -27,7 +27,7 @@ const dieSound = new Audio('src/assets/sounds/die.ogg');
 const pipeWidth = 90;
 const pipeGap = 150;
 const pipeVelocity = 4;
-const PIPE_SPAWN_TIME = 1500;
+const PIPE_SPAWN_TIME = 2500;
 
 const PIPE_PATH = "src/assets/sprites/pipes/";
 const PIPE_FILES = ["pipe-green.png", "pipe-red.png"];

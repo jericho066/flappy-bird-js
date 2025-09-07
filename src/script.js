@@ -27,7 +27,7 @@ const dieSound = new Audio('src/assets/sounds/die.ogg');
 const pipeWidth = 90;
 const pipeGap = 150;
 const pipeVelocity = 4;
-const PIPE_SPAWN_TIME = 1500;
+const PIPE_SPAWN_TIME = 2500;
 
 const PIPE_PATH = "src/assets/sprites/pipes/";
 const PIPE_FILES = ["pipe-green.png", "pipe-red.png"];
@@ -40,7 +40,7 @@ let bgSprites = [];
 let bgImg = null;
 
 //* ground
-const groundHeight = 80;
+const groundHeight = 150;
 const GROUND_FILE = "src/assets/sprites/others/base.png";
 let groundSprite = null;
 
@@ -78,15 +78,13 @@ const GETREADY_FILE = "src/assets/sprites/others/message.png";
 let getReadySprite = null;
 
 //* restart button
-const RESTART_FILE = "src/assets/sprites/others/PlayButton.png";
-let buttonSprite = null;
-
 const restartButton = {
 	x: SCREEN_WIDTH / 2 - 100,
 	y: SCREEN_HEIGHT / 2 + 50,
 	width: 100,
 	height: 50,
 };
+
 
 //* ground and bg scrolling.
 let bg_x = 0;
@@ -274,7 +272,7 @@ const resizeCanvas = () => {
 	if (isMobile()) {
 		scaleGroundHeight = Math.max(groundHeight * gameScale, SCREEN_HEIGHT * 0.12);
 	} else {
-		scaleGroundHeight = groundHeight * gameScale;
+		scaleGroundHeight = groundHeight ;
 	}
 	
 	currentScale = 1;
@@ -575,8 +573,19 @@ const drawStartScreen = () => {
         const numBgTiles = Math.ceil(SCREEN_WIDTH / scaledBgWidth) + 1;
         
         for (let i = 0; i < numBgTiles; i++) {
-			const x = (bg_x % scaledBgWidth) + (i * scaledBgWidth);
-            ctx.drawImage(bgImg, x, 0, scaledBgWidth, SCREEN_HEIGHT);
+			//* to add small overlap to prevent seams
+			let x = Math.floor((bg_x % scaledBgWidth) + (i * scaledBgWidth));
+
+			let tileWidth = scaledBgWidth;
+			if(i > 0) {
+				x -= 1;
+				tileWidth += 1;
+			}
+			if(i < numBgTiles - 1) {
+				tileWidth += 1;
+			}
+
+            ctx.drawImage(bgImg, x, 0, tileWidth, SCREEN_HEIGHT);
         }
 	} else {
 		ctx.fillStyle = skyBlue;
@@ -595,8 +604,17 @@ const drawStartScreen = () => {
         const numGroundTiles = Math.ceil(SCREEN_WIDTH / scaledGroundWidth) + 2;
         
         for (let i = 0; i < numGroundTiles; i++) {
-			const x = (ground_x % scaledGroundWidth) + (i * scaledGroundWidth);
-            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaleGroundHeight);
+			let x = Math.floor((ground_x % scaledGroundWidth) + (i * scaledGroundWidth));
+
+			let tileWidth = scaledGroundWidth;
+			if(i > 0) {
+				x -= 1;
+				tileWidth += 1;
+			}
+			if (i < numGroundTiles - 1) {
+				tileWidth += 1;
+			}
+            ctx.drawImage(groundSprite, x, groundY, tileWidth, scaleGroundHeight);
         }
 	} else {
 		ctx.fillStyle = groundColor;
@@ -673,6 +691,60 @@ const drawPipe = (pipe) => {
   	ctx.restore();
 }
 
+const drawButton = () => {
+	const x = restartButton.x;
+	const y = restartButton.y;
+	const width = restartButton.width;
+	const height = restartButton.height;
+	const cornerRad = 8 * gameScale;
+
+	ctx.save();
+
+	//* draw white gradient background box.
+	const gradient = ctx.createLinearGradient(x, y, x, y + height);
+	gradient.addColorStop(0, "#ffffff");
+	gradient.addColorStop(1, "#d0d0d0");
+
+	ctx.fillStyle = gradient;
+	ctx.strokeStyle = "#b0b0b0";
+	ctx.lineWidth = 1.5 * gameScale;
+
+	ctx.beginPath();
+	ctx.roundRect(x, y, width, height, cornerRad);
+	ctx.fill();
+	ctx.stroke();
+
+	//* draw green triangle on the center.
+	const centerX = x + width / 2;
+	const centerY = y + height / 2;
+	const triangleSize = Math.min(width, height) * 0.28;
+
+	ctx.fillStyle = "#4caf50";
+	ctx.strokeStyle = "#45a049";
+	ctx.lineWidth = 1;
+
+	ctx.beginPath();
+	
+	//* triangle pointing right
+	ctx.moveTo(centerX - triangleSize * 0.35, centerY - triangleSize * 0.45);
+	ctx.lineTo(centerX + triangleSize * 0.65, centerY);
+	ctx.lineTo(centerX - triangleSize * 0.35, centerY + triangleSize * 0.45);
+	ctx.closePath();
+
+	ctx.fill();
+	ctx.stroke();
+
+	//*inner shadow to the box for more depth
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	ctx.roundRect(x + 1, y + 1, width - 2, height - 2, cornerRad - 1);
+	ctx.stroke();
+
+	ctx.restore();
+
+}
+
 const drawFlashEffect = () => {
 	if (flashTimer > 0) {
 		ctx.save();
@@ -697,8 +769,18 @@ const drawGame = (drawBirdOnTop = false) => {
         const numBgTiles = Math.ceil(SCREEN_WIDTH / scaledBgWidth) + 2;
         
         for (let i = 0; i < numBgTiles; i++) {
-			const x = (bg_x % scaledBgWidth) + (i * scaledBgWidth);
-            ctx.drawImage(bgImg, x, 0, scaledBgWidth, SCREEN_HEIGHT);
+			let x = Math.floor((bg_x % scaledBgWidth) + (i * scaledBgWidth));
+
+			let tileWidth = scaledBgWidth;
+			if (i > 0) {
+				x -= 1;
+				tileWidth += 1;
+			}
+			if (i < numBgTiles -1) {
+				tileWidth += 1;
+			}
+
+            ctx.drawImage(bgImg, x, 0, tileWidth, SCREEN_HEIGHT);
         }
 	} else {
 		ctx.fillStyle = skyBlue;
@@ -724,8 +806,18 @@ const drawGame = (drawBirdOnTop = false) => {
         const numGroundTiles = Math.ceil(SCREEN_WIDTH / scaledGroundWidth) + 2;
         
         for (let i = 0; i < numGroundTiles; i++) {
-			const x = (ground_x % scaledGroundWidth) + (i * scaledGroundWidth);
-            ctx.drawImage(groundSprite, x, groundY, scaledGroundWidth, scaleGroundHeight);
+			let x = Math.floor((ground_x % scaledGroundWidth) + (i * scaledGroundWidth));
+
+			let tileWidth = scaledGroundWidth;
+			if (i > 0) {
+				x -= 1;
+				tileWidth += 1;
+			}
+			if (i < numGroundTiles - 1) {
+				tileWidth += 1
+			}
+
+            ctx.drawImage(groundSprite, x, groundY, tileWidth, scaleGroundHeight);
         }
 	} else {
 		ctx.fillStyle = groundColor;
@@ -763,20 +855,7 @@ const drawGameOver = () => {
 
 
 	//* draw restart button
-	if (buttonSprite) {
-		ctx.drawImage(buttonSprite, restartButton.x, restartButton.y, restartButton.width, restartButton.height);
-	} else {
-		ctx.fillStyle = red;
-		ctx.fillRect(
-			restartButton.x,
-			restartButton.y,
-			restartButton.width,
-			restartButton.height
-		);
-
-		const fontSize = Math.min(48, SCREEN_WIDTH / 15);
-		drawText('Restart', SCREEN_WIDTH / 2, restartButton.y + restartButton.height/2 + 8, white, fontSize);
-	}
+	drawButton()
 };
 
 const resetGame = () => {
@@ -1069,7 +1148,6 @@ Promise.all([
 	loadNumberSprites(),
 	loadGameOverSprite(),
 	loadGetReadySprite(),
-	loadButtonSprite()
 ]).then(() => {
 	resetGame();
 	requestAnimationFrame(gameLoop);

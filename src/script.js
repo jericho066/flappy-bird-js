@@ -6,8 +6,6 @@ const BASE_HEIGHT = 680;
 let SCREEN_WIDTH = BASE_WIDTH;
 let SCREEN_HEIGHT = BASE_HEIGHT;
 
-const fps = 60;
-const frameTime = 1000 / fps;
 
 //* colors (falbacks if sprites are not loaded)
 const white = '#ffffff';
@@ -26,7 +24,7 @@ const dieSound = new Audio('src/assets/sounds/die.ogg');
 //* pipe
 const pipeWidth = 90;
 const pipeGap = 150;
-const pipeVelocity = 4;
+const pipeSpeed = 4;
 const PIPE_SPAWN_TIME = 2500;
 
 const PIPE_PATH = "src/assets/sprites/pipes/";
@@ -90,8 +88,8 @@ const restartButton = {
 let bg_x = 0;
 let ground_x = 0;
 const BG_SPEED_MULT = 0.2
-let bg_speed = pipeVelocity * BG_SPEED_MULT;
-let ground_speed = pipeVelocity;
+let bg_speed = pipeSpeed * BG_SPEED_MULT;
+let ground_speed = pipeSpeed;
 
 //* game state 
 let running = true;
@@ -117,6 +115,7 @@ let offsetY = 0;
 let dead = false;
 let deathTimer = 0;
 let hitBounce = false;
+let hitDirection = "down";
 let startAngle = 50;
 let angleTime = 20;
 let angleFrame = 0;
@@ -382,7 +381,7 @@ const movePipes = () => {
 	//* looping backwards so we can safely remove pipes.
 	for (let i = pipes.length - 1; i >= 0; i--) {
 		//* move pipe left.
-		pipes[i].x -= pipeVelocity ;
+		pipes[i].x -= pipeSpeed ;
 
 		//* removing the pipes that are not be able to see on screen.
 		if (pipes[i].x + pipes[i].width < -scaledPipeWidth) {
@@ -419,6 +418,22 @@ const checkCollisions = () => {
 	//* to check the collisions with each pipe.
 	for (let pipe of pipes) {
 		if (rectCollisions(birdRect, pipe)) {
+			//* DETERMINE HIT DIRECTION based on which part of pipe was hit.
+			const birdCenterY = bird.y + bird.height / 2;
+			const pipeCenterY = pipe.y + pipe.height / 2;
+
+			//* to check if the bird hit the top part of bottom pipe.
+			if (pipe.y > 0) {
+				const pipeTopY = pipe.y;
+				const hitTopPart = birdCenterY < pipeTopY + (pipe.height * 0.3);
+
+				if(hitTopPart) {
+					hitDirection = "up";
+				} else {
+					hitDirection = "down";
+				}
+			}
+
 			hitSound.currentTime = 0;
 			hitSound.play();
 
@@ -718,17 +733,32 @@ const drawButton = () => {
 	const centerX = x + width / 2;
 	const centerY = y + height / 2;
 	const triangleSize = Math.min(width, height) * 0.28;
+	const triangleRad = 2 * gameScale;
+
+	const leftX = centerX - triangleSize * 0.35;
+	const leftTopY = centerY - triangleSize * 0.45;
+	const leftBottomY = centerY + triangleSize * 0.45;
+	const rightX = centerX + triangleSize * 0.65;
+	const rightY = centerY;
 
 	ctx.fillStyle = "#4caf50";
 	ctx.strokeStyle = "#45a049";
 	ctx.lineWidth = 1;
+	ctx.lineJoin = "round";
+	ctx.lineCap = "round"
 
 	ctx.beginPath();
 	
 	//* triangle pointing right
-	ctx.moveTo(centerX - triangleSize * 0.35, centerY - triangleSize * 0.45);
-	ctx.lineTo(centerX + triangleSize * 0.65, centerY);
-	ctx.lineTo(centerX - triangleSize * 0.35, centerY + triangleSize * 0.45);
+	ctx.moveTo(leftX, leftTopY + triangleRad);
+
+	ctx.quadraticCurveTo(leftX, leftTopY, leftX + triangleRad *1.2, leftTopY + triangleRad * 0.5);
+	ctx.lineTo(rightX - triangleRad, rightY - triangleRad * 0.8);
+
+	ctx.quadraticCurveTo(rightX + triangleRad * 1.2, rightY, rightX - triangleRad, rightY + triangleRad * 0.8);
+	ctx.lineTo(leftX + triangleRad * 1.2, leftBottomY - triangleRad * 0.5);
+
+	ctx.quadraticCurveTo(leftX, leftBottomY, leftX, leftBottomY - triangleRad);
 	ctx.closePath();
 
 	ctx.fill();
@@ -906,6 +936,7 @@ const resetGame = () => {
 	hitBounce = false;
 	angleFrame = 0;
 	flashTimer = 0;
+	hitDirection ="down";
 
 	pipes = [];
 	passedPipes = [];
@@ -919,8 +950,8 @@ const resetGame = () => {
 
 	bg_x = 0;
 	ground_x = 0;
-	bg_speed = pipeVelocity * BG_SPEED_MULT;
-	ground_speed = pipeVelocity;
+	bg_speed = pipeSpeed * BG_SPEED_MULT;
+	ground_speed = pipeSpeed;
 
 	canvas.style.cursor = "default";
 
@@ -1021,12 +1052,25 @@ const gameLoop = (currentTime) => {
 				//* transition angle animation
 				const progress = angleFrame / angleTime;
 				const ease = 1 - Math.pow(1 - progress, 2);
-				bird.forceAngle = (1 - ease) * startAngle;
+				
+				if (hitDirection === "up") {
+					//* face up
+					bird.forceAngle = (1 - ease) * -startAngle;
+				} else {
+					//* face down
+					bird.forceAngle = (1 - ease) * startAngle;
+				}
+
 				angleFrame += 1;
 
 				//* bird bounce when hit.
 				if(!hitBounce) {
-					bird.velocity = -5.5 * gameScale;
+					if (hitDirection === "up") {
+						bird.velocity = -7.0 * gameScale;
+					} else {
+						bird.velocity = -5.5 * gameScale;
+					}
+					
 					bird.y += bird.velocity;
 					hitBounce = true;
 				}

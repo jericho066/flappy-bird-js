@@ -88,4 +88,4 @@ src/
 - This project uses assets from Samuel Custodio [https://github.com/samuelcust/flappy-bird-assets] under the MIT License
 
 ## License
-MIT
+This project is licensed under <a href="https://github.com/jericho066/flappy-bird-js/blob/main/LICENSE">MIT</a> License.

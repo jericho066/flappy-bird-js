@@ -3,8 +3,8 @@ const ctx = canvas.getContext('2d');
 
 const BASE_WIDTH = 680;
 const BASE_HEIGHT = 680;
-let SCREEN_WIDTH = BASE_WIDTH;
-let SCREEN_HEIGHT = BASE_HEIGHT;
+var SCREEN_WIDTH = BASE_WIDTH;
+var SCREEN_HEIGHT = BASE_HEIGHT;
 
 
 //* colors (falbacks if sprites are not loaded)
@@ -20,6 +20,7 @@ const pointSound = new Audio('src/assets/sounds/point.ogg');
 const flapSound = new Audio('src/assets/sounds/wing.ogg');
 const hitSound = new Audio('src/assets/sounds/hit.ogg');
 const dieSound = new Audio('src/assets/sounds/die.ogg');
+const swooshSound = new Audio("src/assets/sounds/swoosh.ogg");
 
 //* pipe
 const pipeWidth = 90;
@@ -29,18 +30,18 @@ const PIPE_SPAWN_TIME = 2500;
 
 const PIPE_PATH = "src/assets/sprites/pipes/";
 const PIPE_FILES = ["pipe-green.png", "pipe-red.png"];
-let pipeSprites = [];
-let pipeImg = null;
+var pipeSprites = [];
+var pipeImg = null;
 
 const BG_PATH = "src/assets/sprites/bg/";
 const BG_FILES = ["background-day.png", "background-night.png"];
-let bgSprites = [];
-let bgImg = null;
+var bgSprites = [];
+var bgImg = null;
 
 //* ground
 const groundHeight = 80;
 const GROUND_FILE = "src/assets/sprites/others/base.png";
-let groundSprite = null;
+var groundSprite = null;
 
 //* bird
 const bird = {
@@ -57,23 +58,23 @@ const bird = {
 
 const BIRD_COLORS = ["red", "yellow", "blue"];
 const BIRD_PATH = "src/assets/sprites/birds/";
-let birdSpritesMap = {};
-let birdImg = null;
-let birdFrame = 1;
-let frameCount = 0;
+var birdSpritesMap = {};
+var birdImg = null;
+var birdFrame = 1;
+var frameCount = 0;
 
 //* score
 const NUMBER_PATH = "src/assets/sprites/score/";
 const NUMBER_FILES = ["0.png","1.png","2.png","3.png","4.png","5.png","6.png","7.png","8.png","9.png"];
-let numberSprites = [];
+var numberSprites = [];
 
 //* game over
 const GAMEOVER_FILE = "src/assets/sprites/others/gameover.png";
-let gameOverSprite = null;
+var gameOverSprite = null;
 
 //* get ready message
 const GETREADY_FILE = "src/assets/sprites/others/message.png";
-let getReadySprite = null;
+var getReadySprite = null;
 
 //* restart button
 const restartButton = {
@@ -85,42 +86,43 @@ const restartButton = {
 
 
 //* ground and bg scrolling.
-let bg_x = 0;
-let ground_x = 0;
-const BG_SPEED_MULT = 0.2
-let bg_speed = pipeSpeed * BG_SPEED_MULT;
-let ground_speed = pipeSpeed;
+var bgX = 0;
+var groundX = 0;
+var BG_SPEED_MULT = 0.2
+var bgSpeed = pipeSpeed * BG_SPEED_MULT;
+var groundSpeed = pipeSpeed;
+
 
 //* game state 
-let running = true;
-let gameOver = false;
-let pipes = [];
-let passedPipes = [];
-let score = 0;
-let lastPipeTime = 0;
-let groundOffset = 0;
+var running = true;
+var gameOver = false;
+var pipes = [];
+var passedPipes = [];
+var score = 0;
+var lastPipeTime = 0;
+var groundOffset = 0;
 
-let gameState = "start";
-let startTime = 0;
-let floatOffset = 0;
-let gameScale = 1;
+var gameState = "start";
+var startTime = 0;
+var floatOffset = 0;
+var gameScale = 1;
 
-let birdXRatio = 0.09
-let devicePixelRatio = window.devicePixelRatio || 1;
-let currentScale = 1;
-let offsetX = 0;
-let offsetY = 0;
+var birdXRatio = 0.09
+var devicePixelRatio = window.devicePixelRatio || 1;
+var currentScale = 1;
+var offsetX = 0;
+var offsetY = 0;
 
 //* death animation variables.
-let dead = false;
-let deathTimer = 0;
-let hitBounce = false;
-let hitDirection = "down";
-let startAngle = 50;
-let angleTime = 20;
-let angleFrame = 0;
-let flashDuration = 8;
-let flashTimer = 0;
+var dead = false;
+var deathTimer = 0;
+var hitBounce = false;
+var hitDirection = "down";
+var startAngle = 50;
+var angleTime = 20;
+var angleFrame = 0;
+var flashDuration = 8;
+var flashTimer = 0;
 
 const FLOAT_HEIGHT = 15;
 const FLOAT_SPEED = 0.05;
@@ -220,15 +222,6 @@ const loadGetReadySprite = async () => {
 	}
 }
 
-const loadButtonSprite = async () => {
-	//* to load the restart button sprite.
-	try {
-		buttonSprite = await loadImg(RESTART_FILE);
-	} catch (err) {
-		console.warn("Failed to load button sprite", err);
-		buttonSprite = null;
-	}
-}
 
 
 //! ==================================
@@ -245,7 +238,7 @@ const isMobile = () => {
 	return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-let scaleGroundHeight = groundHeight;
+var scaleGroundHeight = groundHeight;
 const resizeCanvas = () => {
 	devicePixelRatio = window.devicePixelRatio || 1;
 
@@ -379,7 +372,7 @@ const movePipes = () => {
 	const scaledPipeWidth = pipeWidth * gameScale;
 
 	//* looping backwards so we can safely remove pipes.
-	for (let i = pipes.length - 1; i >= 0; i--) {
+	for (var i = pipes.length - 1; i >= 0; i--) {
 		//* move pipe left.
 		pipes[i].x -= pipeSpeed ;
 
@@ -416,7 +409,7 @@ const checkCollisions = () => {
 	};
  
 	//* to check the collisions with each pipe.
-	for (let pipe of pipes) {
+	for (var pipe of pipes) {
 		if (rectCollisions(birdRect, pipe)) {
 			//* DETERMINE HIT DIRECTION based on which part of pipe was hit.
 			const birdCenterY = bird.y + bird.height / 2;
@@ -452,6 +445,8 @@ const checkCollisions = () => {
 		hitSound.play();
 		dieSound.currentTime = 0;
 		dieSound.play();
+		swooshSound.currentTime = 0;
+		swooshSound.play();
 
 		dead= true
 		deathTimer = 0;
@@ -469,7 +464,7 @@ const checkCollisions = () => {
 
 const updateScore = () => {
 	//* to update the score when bird passes pipes.
-	for (let pipe of pipes) {
+	for (var pipe of pipes) {
 		if (pipe.x + pipe.width < bird.x && !passedPipes.includes(pipe)) {
 			score += 0.5;
 			passedPipes.push(pipe);
@@ -487,9 +482,9 @@ const drawScore = (score) => {
 	const digitWidth = (numberSprites[0]?.width || 30) * gameScale * 1.8;
 	const digitHeight = (numberSprites[0]?.height || 40) * gameScale * 1.8;
 
-	let totalWidth = digits.length * digitWidth;
-	let startX = (SCREEN_WIDTH - totalWidth) / 2;
-	let y ; //* score distance from top
+	var totalWidth = digits.length * digitWidth;
+	var startX = (SCREEN_WIDTH - totalWidth) / 2;
+	var y ; //* score distance from top
 
 	if (running) {
 		y = Math.max(50, SCREEN_HEIGHT * 0.02);
@@ -526,8 +521,8 @@ const drawText = (text, x, y, color, fontSize = 72) => {
 const drawBird = () => {
 	const img = birdImg ? birdImg[birdFrame] : null;
 
-	let birdY = bird.y ;
-	let rotation = bird.rotation;
+	var birdY = bird.y ;
+	var rotation = bird.rotation;
 
 	if (gameState === "start") {
 		birdY = bird.y + Math.sin(floatOffset) * (FLOAT_HEIGHT * gameScale);
@@ -537,7 +532,18 @@ const drawBird = () => {
 		rotation = bird.forceAngle;
 
 	} else {
-		rotation = Math.max(-25, Math.min(45, bird.velocity * 2));
+		var baseRotation = Math.max(-25, Math.min(45, bird.velocity * 2));
+
+		var rotationMult = 1;
+		if(isMobile()) {
+			//* on mobile, increase rotation by inverse of gameScale
+			rotationMult = 1 + (1 - gameScale) * 1.5;
+			rotationMult = Math.max(1.2, rotationMult)
+		}
+
+		rotation = baseRotation *rotationMult;
+
+		rotation = Math.max(-35, Math.min(60, rotation));
 	}
 
 	const angleRad = (rotation * Math.PI) / 180;
@@ -587,11 +593,11 @@ const drawStartScreen = () => {
 		// const scaledBgHeight = bgImg.height * gameScale;
         const numBgTiles = Math.ceil(SCREEN_WIDTH / scaledBgWidth) + 1;
         
-        for (let i = 0; i < numBgTiles; i++) {
+        for (var i = 0; i < numBgTiles; i++) {
 			//* to add small overlap to prevent seams
-			let x = Math.floor((bg_x % scaledBgWidth) + (i * scaledBgWidth));
+			var x = Math.floor((bgX % scaledBgWidth) + (i * scaledBgWidth));
 
-			let tileWidth = scaledBgWidth;
+			var tileWidth = scaledBgWidth;
 			if(i > 0) {
 				x -= 1;
 				tileWidth += 1;
@@ -618,10 +624,10 @@ const drawStartScreen = () => {
 		const scaledGroundWidth = groundSprite.width * gameScale;
         const numGroundTiles = Math.ceil(SCREEN_WIDTH / scaledGroundWidth) + 2;
         
-        for (let i = 0; i < numGroundTiles; i++) {
-			let x = Math.floor((ground_x % scaledGroundWidth) + (i * scaledGroundWidth));
+        for (var i = 0; i < numGroundTiles; i++) {
+			var x = Math.floor((groundX % scaledGroundWidth) + (i * scaledGroundWidth));
 
-			let tileWidth = scaledGroundWidth;
+			var tileWidth = scaledGroundWidth;
 			if(i > 0) {
 				x -= 1;
 				tileWidth += 1;
@@ -668,7 +674,7 @@ const drawPipe = (pipe) => {
 
 	const srcCap = Math.max(1, Math.round(img.height * SRC_CAP));
 
-	let destCap = Math.max(MIN_CAP, Math.round(pipe.width * DEST_CAP_MULTIPLIER));
+	var destCap = Math.max(MIN_CAP, Math.round(pipe.width * DEST_CAP_MULTIPLIER));
 	destCap = Math.min(destCap, MAX_CAP);
 
 	//* to ensure the caps will fit into pipe height
@@ -732,13 +738,14 @@ const drawButton = () => {
 	//* draw green triangle on the center.
 	const centerX = x + width / 2;
 	const centerY = y + height / 2;
-	const triangleSize = Math.min(width, height) * 0.28;
 	const triangleRad = 2 * gameScale;
+	const triangleWidth = width * 0.2;
+	const triangleHeight = height * 0.4;
 
-	const leftX = centerX - triangleSize * 0.35;
-	const leftTopY = centerY - triangleSize * 0.45;
-	const leftBottomY = centerY + triangleSize * 0.45;
-	const rightX = centerX + triangleSize * 0.65;
+	const leftX = centerX - triangleWidth * 0.4;
+	const leftTopY = centerY - triangleWidth / 2;
+	const leftBottomY = centerY + triangleHeight / 2;
+	const rightX = centerX + triangleWidth * 0.4;
 	const rightY = centerY;
 
 	ctx.fillStyle = "#4caf50";
@@ -798,10 +805,10 @@ const drawGame = (drawBirdOnTop = false) => {
 		const scaledBgWidth = bgImg.width * gameScale;
         const numBgTiles = Math.ceil(SCREEN_WIDTH / scaledBgWidth) + 2;
         
-        for (let i = 0; i < numBgTiles; i++) {
-			let x = Math.floor((bg_x % scaledBgWidth) + (i * scaledBgWidth));
+        for (var i = 0; i < numBgTiles; i++) {
+			var x = Math.floor((bgX % scaledBgWidth) + (i * scaledBgWidth));
 
-			let tileWidth = scaledBgWidth;
+			var tileWidth = scaledBgWidth;
 			if (i > 0) {
 				x -= 1;
 				tileWidth += 1;
@@ -823,7 +830,7 @@ const drawGame = (drawBirdOnTop = false) => {
 	}
 
 	//* pipes
-	for (let pipe of pipes) {
+	for (var pipe of pipes) {
 		drawPipe(pipe);
 	}
 
@@ -835,10 +842,10 @@ const drawGame = (drawBirdOnTop = false) => {
 		const scaledGroundWidth = groundSprite.width * gameScale;
         const numGroundTiles = Math.ceil(SCREEN_WIDTH / scaledGroundWidth) + 2;
         
-        for (let i = 0; i < numGroundTiles; i++) {
-			let x = Math.floor((ground_x % scaledGroundWidth) + (i * scaledGroundWidth));
+        for (var i = 0; i < numGroundTiles; i++) {
+			var x = Math.floor((groundX % scaledGroundWidth) + (i * scaledGroundWidth));
 
-			let tileWidth = scaledGroundWidth;
+			var tileWidth = scaledGroundWidth;
 			if (i > 0) {
 				x -= 1;
 				tileWidth += 1;
@@ -894,7 +901,7 @@ const resetGame = () => {
 
 	//* to randomly pick pipe sprite every time the game reset
 	if (pipeSprites && pipeSprites.length > 0) {
-		let idx = Math.floor(Math.random() * pipeSprites.length);
+		var idx = Math.floor(Math.random() * pipeSprites.length);
 
 		if (!pipeSprites[idx]) {
 			const firstValid = pipeSprites.find(img => img !== null);
@@ -908,7 +915,7 @@ const resetGame = () => {
 
 	//* to randomly pick background sprite every time the game reset.
 	if (bgSprites && bgSprites.length > 0) {
-		let idx = Math.floor(Math.random() * bgSprites.length);
+		var idx = Math.floor(Math.random() * bgSprites.length);
 		if (!bgSprites[idx]) {
 			const firstValid = bgSprites.find(img => img !== null);
 			idx = bgSprites.indexOf(firstValid);
@@ -948,10 +955,10 @@ const resetGame = () => {
 	startTime = 0;
 	floatOffset = 0;
 
-	bg_x = 0;
-	ground_x = 0;
-	bg_speed = pipeSpeed * BG_SPEED_MULT;
-	ground_speed = pipeSpeed;
+	bgX = 0;
+	groundX = 0;
+	bgSpeed = pipeSpeed * BG_SPEED_MULT;
+	groundSpeed = pipeSpeed;
 
 	canvas.style.cursor = "default";
 
@@ -1004,29 +1011,29 @@ const gameLoop = (currentTime) => {
 		}
 
 		//* scrolling for visual appeal (background)
-		bg_x -= bg_speed * 0.3;
-		ground_x -= ground_speed * 0.3;
+		bgX -= bgSpeed * 0.3;
+		groundX -= groundSpeed * 0.3;
 
 		if (bgImg) {
 			const bgWidth = bgImg.width * gameScale;
-			if(bg_x <= -bgWidth) {
-				bg_x = 0;
+			if(bgX <= -bgWidth) {
+				bgX = 0;
 			}
 		} else {
-			if (bg_x <= -SCREEN_WIDTH) {
-				bg_x = 0;
+			if (bgX <= -SCREEN_WIDTH) {
+				bgX = 0;
 			}
 		}
 
 		//* scrolling for visual appeal (ground)
 		if (groundSprite) {
 			const groundWidth = groundSprite.width * gameScale;
-			if(ground_x <= -groundWidth) {
-				ground_x = 0;
+			if(groundX <= -groundWidth) {
+				groundX = 0;
 			}
 		} else {
-			if (ground_x <= -SCREEN_WIDTH) {
-				ground_x = 0;
+			if (groundX <= -SCREEN_WIDTH) {
+				groundX = 0;
 			}
 		}
 
@@ -1087,6 +1094,8 @@ const gameLoop = (currentTime) => {
 				
 				if(bird.y + bird.height >= SCREEN_HEIGHT - scaleGroundHeight) {
 					bird.y = SCREEN_HEIGHT - scaleGroundHeight - bird.height;
+					swooshSound.currentTime = 0;
+					swooshSound.play();
 
 					if( flashTimer <= 0) {
 						gameState ="gameOver";
@@ -1104,28 +1113,28 @@ const gameLoop = (currentTime) => {
 
 		//* full speed scrolling
 		if (!dead) {
-			bg_x -= bg_speed ;
-			ground_x -= ground_speed ;
+			bgX -= bgSpeed ;
+			groundX -= groundSpeed ;
 
 			if (bgImg) {
 				const bgWidth = bgImg.width * gameScale;
-				if(bg_x <= -bgWidth) {
-					bg_x = 0;
+				if(bgX <= -bgWidth) {
+					bgX = 0;
 				}
 			} else {
-				if (bg_x <= -SCREEN_WIDTH) {
-					bg_x = 0;
+				if (bgX <= -SCREEN_WIDTH) {
+					bgX = 0;
 				}
 			}
 
 			if (groundSprite) {
 				const groundWidth = groundSprite.width * gameScale;
-				if(ground_x <= -groundWidth) {
-					ground_x = 0;
+				if(groundX <= -groundWidth) {
+					groundX = 0;
 				}
 			} else {
-				if (ground_x <= -SCREEN_WIDTH) {
-					ground_x = 0;
+				if (groundX <= -SCREEN_WIDTH) {
+					groundX = 0;
 				}
 			}
 
@@ -1222,23 +1231,6 @@ document.addEventListener('keydown', function (event) {
 		}
 	}
 });
-
-//* to prevent scrolling/zooming on mobile.
-document.addEventListener("touchmove", (e) => {
-	e.preventDefault();
-}, {passive: false});
-
-document.addEventListener("gesturestart", (e) => {
-	e.preventDefault();
-}, {passive: false});
-
-document.addEventListener("gesturechange", (e) => {
-	e.preventDefault();
-}, {passive: false});
-
-document.addEventListener("gestureend", (e) => {
-	e.preventDefault();
-}, {passive: false});
 
 // resetGame();
 // requestAnimationFrame(gameLoop);

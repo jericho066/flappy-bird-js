@@ -15,7 +15,7 @@ A fully-featured Flappy Bird clone built with JavaScript and HTML5 Canvas. This 
 - Graceful fallback to colored shapes/text if assets fail to load
 
 ## Demo 
-- This project has no demo yet
+(Live Demo)[https://jericho066.github.io/flappy-bird-js/]
 
 ## Folder Structure
 ```
